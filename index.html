@@ -1,0 +1,172 @@
+!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Perceptual Circle Scaling</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+  body {
+margin:0;
+padding:0;
+font-family:
+sans-serif;
+}
+h1 {
+position: absolute;
+left: 220px;
+top: 70px;
+padding: 8px 2%;
+margin: 0;
+background: rgba(106,13,173,0.85);
+box-shadow: 0 0 15px rgba(0,0,0,0.2);
+border-radius: 3px;
+color: white;
+font-size: 1.8em;
+z-index: 800;
+}
+#map {
+position:absolute;
+top:0;
+bottom:0;
+width:100%;
+height: 100%;
+}
+.info
+{
+      padding: 6px 8px;
+      font: 12px/16px Verdana, Geneva, sans-serif;
+      background: white;
+      background: rgba(255,255,255,1);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 3px;
+  }
+
+ .legend {
+      line-height: 45px;
+      padding:1px;
+      color: #555;
+     }
+
+ .legend i {
+      width: 15px;
+      height: 15px;
+      float: left;
+      margin-right: 7px;
+      opacity: 0.7;
+    }
+
+  .circle
+{
+float: left;
+border: 1px solid #222;
+border-radius: 50%;
+}
+
+.legend .colorcircle {
+border-radius: 50%;
+width: 15px;
+height: 15px;
+margin-top: 0px;
+}
+.legend .circlepadding {
+border-radius: 50%;
+background: rgba(255, 255, 255, 0.85);
+}
+
+#text {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    padding: 8px 2%;
+    margin: 0;
+    background: rgba(117,54,0,1);
+    box-shadow: 0 0 15 px rgba(0,0,0,0.2);
+    border-radius: 3px;
+    color: white;
+    width: 18%;
+    font-size: 0.8em;
+    z-index: 800;
+</style>
+</head>
+<body>
+  <div id='text'>
+    <h2><i>Certain States Have Higher Rates</h2></i>
+    <p> This proportional symbol map represents the number of Veteran suicides in the United States in 2017. The circles over each state are proportional to the number of suicides within that state, therefore, the smaller the circle, the smaller the number. The interactive features of this map allow you to go beyond the proportional scaling by click activating the actual number of suicides represented.
+<br><br>
+  </div>
+<div id='map'></div>
+<h1>Veteran Suicides in the United States, 2017</h1>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+<script>
+console.log("hello world!");
+var map = L.map('map', {
+  center: [39.5, -98],
+  zoom: 4
+});
+var Stamen_Toner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}{r}.{ext}', {
+attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+subdomains: 'abcd',
+minZoom: 0,
+maxZoom: 20,
+ext: 'png'
+}).addTo(map);
+states = L.geoJson.ajax("assets/data.geojson", {
+attribution: 'Data: US Department of Veteran Affairs, Map: Ryan Childress',
+onEachFeature: function (feature, layer) {
+         layer.bindPopup(feature.properties.name + "<BR>" + feature.properties.estimate);
+     },
+pointToLayer: function (feature, x){
+  return L.circleMarker(x, {
+    color: '#6A0DAD',
+opacity: 1,
+weight: 2,
+fillColor: '#005F68',
+fillOpacity: .6,
+radius: calcRadius(feature.properties.estimate)
+}).on({
+  mouseover: function(e){
+this.setStyle({color: '753600',fillColor: '753600'});
+},
+mouseout: function(e){
+this.setStyle({color:'#6A0DAD', fillColor: '#005F68'});
+} })},});
+var minValue = 10;
+var minRadius = 7;
+function calcRadius(val) {
+  return 1.00 * Math.pow(val/minValue,.5) * minRadius;
+}
+
+states.addTo(map);
+L.control.scale({position: 'bottomleft'}).addTo(map);
+
+function getRadius(r) {
+return  r > 500 ? 46 :
+       r > 150 ? 26 :
+       r > 25 ? 12 :
+       0;
+}
+
+var legend = L.control({position: 'bottomright'});
+legend.onAdd = function (map) {
+
+var div = L.DomUtil.create('div', 'info legend');
+grades = [100, 200, 600],
+labels = ['<strong>Number of Suicides</strong>'],
+categories = ['25','150','500'];
+
+for (var i = 0; i < grades.length; i++) {
+       var grade = grades[i];//*0.5;
+  labels.push(
+       '<i class="circlepadding" style="width: '+Math.max(8,(7-2.2*getRadius(grade)))+'px;"></i> <i style="background: #6A0DAD; width: '+getRadius(grade)*2+'px; height: '+getRadius(grade)*2+'px; border-radius: 50%; margin-top: '+Math.max(0,(9-getRadius(grade)))+'px;"></i><i class="circlepadding" style="width: '+Math.max(2,(25-2*getRadius(grade)))+'px;"></i> ' + categories[i]);
+  }
+div.innerHTML = labels.join('<br>');
+return div;
+};
+legend.addTo(map);
+
+</script>
+</body>
+</html>
